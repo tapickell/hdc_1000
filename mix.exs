@@ -7,7 +7,13 @@ defmodule Hdc1000.MixProject do
       version: "0.1.0",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      name: "HDC 1000",
+      source_url: "https://github.com/tapickell/hdc_1000",
+      docs: [
+        # The main page in the docs
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -21,7 +27,8 @@ defmodule Hdc1000.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:circuits_i2c, "~> 0.3"}
+      {:circuits_i2c, "~> 0.3"},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end
 end

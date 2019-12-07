@@ -2,27 +2,27 @@ defmodule Hdc1000.I2C do
   use Bitwise
 
   @moduledoc """
-  This is a library for the HDC1000 Humidity & Temp Sensor
-  Designed specifically to work with the HDC1000 sensor from Adafruit
-  ----> https://www.adafruit.com/products/2635
-  These sensors use I2C to communicate, 2 pins are required to
-  interface.
-
-  Please note:
-  TI has indicated that there's a 'settling' effect for the humidity and
-  that you will need to re-hydrate the sensor once you receive it.
-  To rehydrate it, place it in a location with 85% humidity for 24 hours
-  or 60% humidity for 10 days.
-
-  {:ok, {ref, 0x40} = sensor} = Hdc1000.I2C.init(0x40)
-  {:ok, {ref, 0x40}} = Hdc1000.I2C.reset(0x40)
-
-  {:ok, temp} = Hdc1000.I2C.read_temp(sensor)
-  {:ok, rh} = Hdc1000.I2C.read_rh(sensor)
-  {:ok, {temp, rh}} = Hdc1000.I2C.read_temp_and_rh(sensor)
-  :ok = Hdc1000.I2C.dry_sensor(sensor)
+  I2C interface to HDC1000 sensor
   """
 
+  @doc """
+  Initializes the sensor and ensures it is open for communication.
+
+  Takes a bus name for I2C bus and an address for the sensor on the bus.
+  If an address is not provided the default address
+  of 0x40 will be used and returned to the caller.
+
+  If you are unsure about the devices bus_name run
+  iex> Circuits.I2C.bus_names()
+
+  Returns ok tuple containing a tuple of the reference and the address
+  of the sensor on I2C.
+
+  ## Examples
+
+      iex> {:ok, {ref, 0x40} = sensor} = Hdc1000.I2C.init("i2c-1", 0x40)
+
+  """
   def init(bus_name, address \\ 0x40) do
     with {:ok, ref} <- Circuits.I2C.open(bus_name),
          {:ok, <<16, 0>>} <- read_16(ref, address, <<0xFF>>),
@@ -31,42 +31,85 @@ defmodule Hdc1000.I2C do
     end
   end
 
-  def reset(address) do
+  @doc """
+  Resets the sensor with the default configuration settings.
+
+  ## Examples
+
+      iex> {:ok, {ref, 0x40}} = Hdc1000.I2C.reset(0x40)
+
+  """
+  def reset(_address) do
+    :ok
   end
 
-  def dry_sensor(ref) do
+  @doc """
+  Dries the sensor by running a bunch of reads from it to heat it up.
+
+  ## Examples
+
+      iex> {:ok, {ref, 0x40} = sensor} = Hdc1000.I2C.init("i2c-1", 0x40)
+      iex> :ok = Hdc1000.I2C.dry_sensor(sensor)
+
+  """
+
+  def dry_sensor(_ref) do
+    :ok
   end
 
+  @doc """
+  Reads from the sensor and returns the temperature
+  in celcius as a float
+
+  ## Examples
+
+      iex> {:ok, {ref, 0x40} = sensor} = Hdc1000.I2C.init("i2c-1", 0x40)
+      iex> {:ok, temp} = Hdc1000.I2C.read_temp(sensor)
+
+  """
   def read_temp({ref, address}) do
     {:ok, data} = read_32(ref, address, <<0x00>>)
     {:ok, calc_temp(data)}
   end
 
-  def read_rh(ref) do
+  @doc """
+  Reads from the sensor and returns the relative
+  humidity as a float
+
+  ## Examples
+
+      iex> {:ok, {ref, 0x40} = sensor} = Hdc1000.I2C.init("i2c-1", 0x40)
+      iex> {:ok, rh} = Hdc1000.I2C.read_rh(sensor)
+
+  """
+  def read_rh({ref, address}) do
     {:ok, data} = read_32(ref, address, <<0x00>>)
     {:ok, calc_rh(data)}
   end
 
-  def read_temp_and_rh(ref) do
+  @doc """
+  Reads from the sensor and returns the temperature and
+  relative humidity as a float in a tuple
+
+  ## Examples
+
+      iex> {:ok, {ref, 0x40} = sensor} = Hdc1000.I2C.init("i2c-1", 0x40)
+      iex> {:ok, {temp, rh}} = Hdc1000.I2C.read_temp_and_rh(sensor)
+
+  """
+  def read_temp_and_rh({ref, address}) do
     {:ok, data} = read_32(ref, address, <<0x00>>)
     {:ok, {calc_temp(data), calc_rh(data)}}
   end
 
   # PRIVATE FUNCTIONS
 
-  defp read(ref, address, send, count) do
-    with :ok <- Circuits.I2C.write!(ref, address, send),
-         :ok <- Process.sleep(20) do
-      Circuits.I2C.read(ref, address, count)
-    end
-  end
-
   defp read_16(ref, address, send) do
-    read(ref, address, send, 2)
+    Circuits.I2C.write_read(ref, address, send, 2)
   end
 
   defp read_32(ref, address, send) do
-    read(ref, address, send, 4)
+    Circuits.I2C.write_read(ref, address, send, 4)
   end
 
   defp calc_temp(data) do
@@ -77,10 +120,5 @@ defmodule Hdc1000.I2C do
   defp calc_rh(data) do
     b = Bitwise.&&&(data, 0xFFFF)
     b / 65536 * 100
-  end
-
-  defp read_sensor(ref, address) do
-    {:ok, <<data::32>>} = read_32(ref, address, <<0x00>>)
-    data
   end
 end
