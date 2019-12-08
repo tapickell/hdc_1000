@@ -28,6 +28,7 @@ defmodule Hdc1000.MixProject do
   defp deps do
     [
       {:circuits_i2c, "~> 0.3"},
+      {:dialyxir, "~> 0.3", only: [:dev]},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end
