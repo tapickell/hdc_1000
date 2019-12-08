@@ -104,12 +104,21 @@ defmodule Hdc1000.I2C do
 
   # PRIVATE FUNCTIONS
 
+  defp write_read(ref, address, send, read) do
+    with {:error, :i2c_nak} <- Circuits.I2C.write_read(ref, address, send, read),
+         :ok <- Circuits.I2C.write(ref, address, send),
+         :ok <- Process.sleep(20),
+         {:ok, data} <- Circuits.I2C.read(ref, address, read) do
+      {:ok, data}
+    end
+  end
+
   defp read_16(ref, address, send) do
-    Circuits.I2C.write_read(ref, address, send, 2)
+    write_read(ref, address, send, 2)
   end
 
   defp read_32(ref, address, send) do
-    Circuits.I2C.write_read(ref, address, send, 4)
+    write_read(ref, address, send, 4)
   end
 
   defp calc_temp(data) do
