@@ -3,6 +3,9 @@ defmodule Hdc1000.I2C do
 
   require Logger
 
+  @sixteen {16, 2}
+  @thirty_two {32, 4}
+
   @data_issue "Data for calculation is not an Integer: "
   @i2c_nak_warn "Recieved :i2c_nak on write_read. Falling back to write, sleep, read."
   @readable "Able to read from sensor"
@@ -116,30 +119,30 @@ defmodule Hdc1000.I2C do
 
   # PRIVATE FUNCTIONS
 
-  defp write_sleep_read(ref, address, send, read) do
+  defp write_sleep_read(ref, address, send, {size, read}) do
     with :ok <- Circuits.I2C.write(ref, address, send),
          :ok <- Process.sleep(20),
-         {:ok, <<data::32>>} <- Circuits.I2C.read(ref, address, read) do
+         {:ok, <<data::size(size)>>} <- Circuits.I2C.read(ref, address, read) do
       {:ok, data}
     end
   end
 
-  defp write_read(ref, address, send, read) do
-    with {:ok, <<data::32>>} <- Circuits.I2C.write_read(ref, address, send, read) do
+  defp write_read(ref, address, send, {size, read}) do
+    with {:ok, <<data::size(size)>>} <- Circuits.I2C.write_read(ref, address, send, read) do
       {:ok, data}
     else
       {:error, :i2c_nak} ->
         _ = Logger.info([__MODULE__, @i2c_nak_warn])
-        write_sleep_read(ref, address, send, read)
+        write_sleep_read(ref, address, send, {size, read})
     end
   end
 
   defp read_16(ref, address, send) do
-    write_read(ref, address, send, 2)
+    write_read(ref, address, send, @sixteen)
   end
 
   defp read_32(ref, address, send) do
-    write_read(ref, address, send, 4)
+    write_read(ref, address, send, @thirty_two)
   end
 
   defp calc_temp(data) when is_integer(data) do
