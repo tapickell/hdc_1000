@@ -6,6 +6,7 @@ defmodule Hdc1000.I2C do
   @sixteen {16, 2}
   @thirty_two {32, 4}
 
+  @module to_string(__MODULE__)
   @data_issue "Data for calculation is not an Integer: "
   @i2c_nak_warn "Recieved :i2c_nak on write_read. Falling back to write, sleep, read."
   @readable "Able to read from sensor"
@@ -38,9 +39,9 @@ defmodule Hdc1000.I2C do
 
     with {:ok, _dev_id} <- read_16(ref, address, <<0xFF>>),
          {:ok, _manuf_id} <- read_16(ref, address, <<0xFE>>) do
-      Logger.info([__MODULE__, @readable])
+      Logger.info([@module, @readable])
     else
-      err -> Logger.warn([__MODULE__, @read_fail, err])
+      err -> Logger.warn([@module, @read_fail, err])
     end
 
     {:ok, {ref, address}}
@@ -132,7 +133,7 @@ defmodule Hdc1000.I2C do
       {:ok, data}
     else
       {:error, :i2c_nak} ->
-        _ = Logger.info([__MODULE__, @i2c_nak_warn])
+        _ = Logger.info([@module, @i2c_nak_warn])
         write_sleep_read(ref, address, send, {size, read})
     end
   end
@@ -151,7 +152,7 @@ defmodule Hdc1000.I2C do
   end
 
   defp calc_temp(data) do
-    _ = Logger.warn([__MODULE__, @data_issue, data])
+    _ = Logger.warn([@module, @data_issue, data])
     :error
   end
 
@@ -161,7 +162,7 @@ defmodule Hdc1000.I2C do
   end
 
   defp calc_rh(data) do
-    _ = Logger.warn([__MODULE__, @data_issue, data])
+    _ = Logger.warn([@module, @data_issue, data])
     :error
   end
 end
