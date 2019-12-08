@@ -1,7 +1,7 @@
 # Hdc1000
 
 [![Hex version](https://img.shields.io/hexpm/v/hdc_1000.svg "Hex version")](https://hex.pm/packages/hdc_1000)
-[![API docs](https://img.shields.io/hexpm/v/hdc_1000.svg?label=hexdocs "API docs")](https://hexdocs.pm/hdc_1000/Hdc1000.html)
+[![API docs](https://img.shields.io/hexpm/v/hdc_1000.svg?label=hexdocs "API docs")](https://hexdocs.pm/hdc_1000/readme.html)
 
   This is a library for the HDC1000 Humidity & Temp Sensor
 
