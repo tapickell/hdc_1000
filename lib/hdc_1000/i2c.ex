@@ -119,7 +119,7 @@ defmodule Hdc1000.I2C do
       {:error, "#{@data_issue}"}
   """
   @spec read_temp(sensor()) :: {:ok, float()} | {:error, String.t()}
-  def read_temp({ref, address}) do
+  def read_temp({ref, address} = _sensor) do
     with {:ok, data} <- read_32(ref, address, <<0x00>>),
          {:ok, temp} <- calc_temp(data) do
       {:ok, temp}
@@ -144,7 +144,7 @@ defmodule Hdc1000.I2C do
       {:error, "#{@data_issue}"}
   """
   @spec read_rh(sensor()) :: {:ok, float()} | {:error, String.t()}
-  def read_rh({ref, address}) do
+  def read_rh({ref, address} = _sensor) do
     with {:ok, data} <- read_32(ref, address, <<0x00>>),
          {:ok, rh} <- calc_rh(data) do
       {:ok, rh}
@@ -169,7 +169,7 @@ defmodule Hdc1000.I2C do
       {:error, "#{@data_issue}"}
   """
   @spec read_temp_and_rh(sensor()) :: {:ok, {float(), float()}} | {:error, String.t()}
-  def read_temp_and_rh({ref, address}) do
+  def read_temp_and_rh({ref, address} = _sensor) do
     with {:ok, data} <- read_32(ref, address, <<0x00>>),
          {:ok, temp} <- calc_temp(data),
          {:ok, rh} <- calc_rh(data) do
