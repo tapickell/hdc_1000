@@ -1,6 +1,8 @@
 defmodule Hdc1000.I2C do
   use Bitwise
 
+  require Logger
+
   @moduledoc """
   I2C interface to HDC1000 sensor
   """
@@ -104,12 +106,21 @@ defmodule Hdc1000.I2C do
 
   # PRIVATE FUNCTIONS
 
-  defp write_read(ref, address, send, read) do
-    with {:error, :i2c_nak} <- Circuits.I2C.write_read(ref, address, send, read),
-         :ok <- Circuits.I2C.write(ref, address, send),
+  defp write_sleep_read(ref, address, send, read) do
+    with :ok <- Circuits.I2C.write(ref, address, send),
          :ok <- Process.sleep(20),
-         {:ok, data} <- Circuits.I2C.read(ref, address, read) do
+         {:ok, <<data::32>>} <- Circuits.I2C.read(ref, address, read) do
       {:ok, data}
+    end
+  end
+
+  defp write_read(ref, address, send, read) do
+    with {:ok, <<data::32>>} <- Circuits.I2C.write_read(ref, address, send, read) do
+      {:ok, data}
+    else
+      {:error, :i2c_nak} ->
+        _ = Logger.info("Recieved :i2c_nak on write_read. Falling back to write, sleep, read.")
+        write_sleep_read(ref, address, send, read)
     end
   end
 
