@@ -6,7 +6,7 @@ defmodule Hdc1000.I2C do
   @sixteen {16, 2}
   @thirty_two {32, 4}
 
-  @module to_string(__MODULE__)
+  @module [to_string(__MODULE__), " :: "]
   @data_issue "Data for calculation is not an Integer: "
   @i2c_nak_warn "Recieved :i2c_nak on write_read. Falling back to write, sleep, read."
   @readable "Able to read from sensor"
