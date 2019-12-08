@@ -3,6 +3,11 @@ defmodule Hdc1000.I2C do
 
   require Logger
 
+  @data_issue "Data for calculation is not an Integer: "
+  @i2c_nak_warn "Recieved :i2c_nak on write_read. Falling back to write, sleep, read."
+  @readable "Able to read from sensor"
+  @read_fail "Failed reading from sensor: "
+
   @moduledoc """
   I2C interface to HDC1000 sensor
   """
@@ -26,11 +31,16 @@ defmodule Hdc1000.I2C do
 
   """
   def init(bus_name, address \\ 0x40) do
-    with {:ok, ref} <- Circuits.I2C.open(bus_name),
-         {:ok, <<16, 0>>} <- read_16(ref, address, <<0xFF>>),
+    {:ok, ref} = Circuits.I2C.open(bus_name)
+
+    with {:ok, <<16, 0>>} <- read_16(ref, address, <<0xFF>>),
          {:ok, "TI"} <- read_16(ref, address, <<0xFE>>) do
-      {:ok, {ref, address}}
+      Logger.info([__MODULE__, @readable])
+    else
+      err -> Logger.warn([__MODULE__, @read_fail, err])
     end
+
+    {:ok, {ref, address}}
   end
 
   @doc """
@@ -119,7 +129,7 @@ defmodule Hdc1000.I2C do
       {:ok, data}
     else
       {:error, :i2c_nak} ->
-        _ = Logger.info("Recieved :i2c_nak on write_read. Falling back to write, sleep, read.")
+        _ = Logger.info([__MODULE__, @i2c_nak_warn])
         write_sleep_read(ref, address, send, read)
     end
   end
@@ -132,13 +142,23 @@ defmodule Hdc1000.I2C do
     write_read(ref, address, send, 4)
   end
 
-  defp calc_temp(data) do
+  defp calc_temp(data) when is_integer(data) do
     a = Bitwise.>>>(data, 16)
     a / 65536 * 165 - 40
   end
 
-  defp calc_rh(data) do
+  defp calc_temp(data) do
+    _ = Logger.warn([__MODULE__, @data_issue, data])
+    :error
+  end
+
+  defp calc_rh(data) when is_integer(data) do
     b = Bitwise.&&&(data, 0xFFFF)
     b / 65536 * 100
+  end
+
+  defp calc_rh(data) do
+    _ = Logger.warn([__MODULE__, @data_issue, data])
+    :error
   end
 end
