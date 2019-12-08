@@ -33,8 +33,8 @@ defmodule Hdc1000.I2C do
   def init(bus_name, address \\ 0x40) do
     {:ok, ref} = Circuits.I2C.open(bus_name)
 
-    with {:ok, <<16, 0>>} <- read_16(ref, address, <<0xFF>>),
-         {:ok, "TI"} <- read_16(ref, address, <<0xFE>>) do
+    with {:ok, _dev_id} <- read_16(ref, address, <<0xFF>>),
+         {:ok, _manuf_id} <- read_16(ref, address, <<0xFE>>) do
       Logger.info([__MODULE__, @readable])
     else
       err -> Logger.warn([__MODULE__, @read_fail, err])
